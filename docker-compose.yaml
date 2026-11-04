@@ -1,30 +1,32 @@
-
-
 services:
   redis:
     image: redis:6
     restart: on-failure
+    mem_limit: 256m
     volumes:
     - redis:/data
-   
+
   mongodb:
     image: mongo:4
     restart: on-failure
+    mem_limit: 1g
     volumes:
       - mongodb:/data
-      
+
   # See https://github.com/hashicorp/consul/blob/master/demo/docker-compose-cluster/docker-compose.yml
   # for a production-ready config.
   consul:
     image: consul:1.8
     restart: on-failure
+    mem_limit: 256m
     command: consul agent -dev -log-level=info -client=0.0.0.0
-        
+
   ui:
-    image: mindcollapse/malware-multi-scan-ui
+    image: panoptes-ui:local
     restart: on-failure
+    mem_limit: 512m
     ports:
-      - "8888:8888" 
+      - "8888:8888"
     depends_on:
       - api
     environment:
@@ -36,8 +38,9 @@ services:
       dockerfile: Dockerfile
 
   api:
-    image: mindcollapse/malware-multi-scan-api
+    image: panoptes-api:local
     restart: on-failure
+    mem_limit: 512m
     depends_on:
       - consul
       - redis
@@ -49,105 +52,126 @@ services:
     build:
       context: .
       dockerfile: MalwareMultiScan.Api/Dockerfile
-  
+
   dummy-scanner:
-    image: mindcollapse/malware-multi-scan-scanner
+    image: panoptes-scanner:local
     restart: on-failure
+    mem_limit: 512m
     depends_on:
       - consul
       - redis
     environment:
       - "REDIS_ADDRESS=redis:6379"
       - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
     build:
       context: .
       dockerfile: MalwareMultiScan.Scanner/Dockerfile
-  
+
   clamav-scanner:
-    image: mindcollapse/malware-multi-scan-scanner-clamav
+    image: panoptes-scanner-clamav:local
     restart: on-failure
+    mem_limit: 1g
+    profiles: ["clamav"]
     depends_on:
       - dummy-scanner
     environment:
       - "REDIS_ADDRESS=redis:6379"
       - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: Clamav.Dockerfile
-      
+      args:
+        - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+
   windows-defender-scanner:
-    image: mindcollapse/malware-multi-scan-scanner-windows-defender
+    image: panoptes-scanner-windows-defender:local
     restart: on-failure
+    mem_limit: 1g
+    profiles: ["windows-defender"]
     depends_on:
       - dummy-scanner
     environment:
       - "REDIS_ADDRESS=redis:6379"
       - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: WindowsDefender.Dockerfile
+      args:
+        - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
 
-# IMPORTANT: FOLLOWING SCAN BACKENDS SHOULD BE ENABLED ONLY IF YOU HAVE A VALID LICENSE
-# IMPORTANT: PLEASE CHECK VENDORS EULA TO STAY COMPLIANT WITH USAGE POLICY
-#  comodo-scanner:
-#    image: mindcollapse/malware-multi-scan-scanner-windows-comodo
-#    restart: on-failure
-#    depends_on:
-#      - dummy-scanner
-#    environment:
-#      - "REDIS_ADDRESS=redis:6379"
-#      - "CONSUL_ADDRESS=http://consul:8500"
-#    build:
-#      context: MalwareMultiScan.Backends/Dockerfiles
-#      dockerfile: Comodo.Dockerfile
-#      
+  # IMPORTANT: FOLLOWING SCAN BACKENDS SHOULD BE ENABLED ONLY IF YOU HAVE A VALID LICENSE
+  # IMPORTANT: PLEASE CHECK VENDORS EULA TO STAY COMPLIANT WITH USAGE POLICY
+
   drweb-scanner:
-    image: mindcollapse/malware-multi-scan-scanner-windows-drweb
+    image: panoptes-scanner-drweb:local
     restart: on-failure
+    mem_limit: 1g
+    profiles: ["drweb"]
     depends_on:
       - dummy-scanner
     environment:
       - "REDIS_ADDRESS=redis:6379"
       - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: DrWeb.Dockerfile
-      
-#  kes-scanner:
-#    image: mindcollapse/malware-multi-scan-scanner-windows-kes
-#    restart: on-failure
-#    depends_on:
-#      - dummy-scanner
-#    environment:
-#      - "REDIS_ADDRESS=redis:6379"
-#      - "CONSUL_ADDRESS=http://consul:8500"
-#    build:
-#      context: MalwareMultiScan.Backends/Dockerfiles
-#      dockerfile: KES.Dockerfile
-#      
-#  mcafee-scanner:
-#    image: mindcollapse/malware-multi-scan-scanner-windows-mcafeee
-#    restart: on-failure
-#    depends_on:
-#      - dummy-scanner
-#    environment:
-#      - "REDIS_ADDRESS=redis:6379"
-#      - "CONSUL_ADDRESS=http://consul:8500"
-#    build:
-#      context: MalwareMultiScan.Backends/Dockerfiles
-#      dockerfile: McAfee.Dockerfile
-#      
-#  sophos-scanner:
-#    image: mindcollapse/malware-multi-scan-scanner-windows-sophos
-#    restart: on-failure
-#    depends_on:
-#      - dummy-scanner
-#    environment:
-#      - "REDIS_ADDRESS=redis:6379"
-#      - "CONSUL_ADDRESS=http://consul:8500"
-#    build:
-#      context: MalwareMultiScan.Backends/Dockerfiles
-#      dockerfile: Sophos.Dockerfile
+      args:
+        - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+
+  kes-scanner:
+    image: panoptes-scanner-kes:local
+    restart: on-failure
+    mem_limit: 2g
+    profiles: ["kes"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: KES.Dockerfile
+
+  comodo-scanner:
+    image: panoptes-scanner-comodo:local
+    restart: on-failure
+    mem_limit: 1g
+    profiles: ["comodo"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: Comodo.Dockerfile
+      args:
+        - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+
+  mcafee-scanner:
+    image: panoptes-scanner-mcafee:local
+    restart: on-failure
+    mem_limit: 512m
+    profiles: ["mcafee"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: McAfee.Dockerfile
+      args:
+        - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+
+# eset-scanner and escan-scanner services are added by their engine tasks.
 
 volumes:
   mongodb:
