@@ -1,4 +1,4 @@
-version: "3.3"
+
 
 services:
   redis:
@@ -101,18 +101,18 @@ services:
 #      context: MalwareMultiScan.Backends/Dockerfiles
 #      dockerfile: Comodo.Dockerfile
 #      
-#  drweb-scanner:
-#    image: mindcollapse/malware-multi-scan-scanner-windows-drweb
-#    restart: on-failure
-#    depends_on:
-#      - dummy-scanner
-#    environment:
-#      - "REDIS_ADDRESS=redis:6379"
-#      - "CONSUL_ADDRESS=http://consul:8500"
-#    build:
-#      context: MalwareMultiScan.Backends/Dockerfiles
-#      dockerfile: DrWeb.Dockerfile
-#      
+  drweb-scanner:
+    image: mindcollapse/malware-multi-scan-scanner-windows-drweb
+    restart: on-failure
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: DrWeb.Dockerfile
+      
 #  kes-scanner:
 #    image: mindcollapse/malware-multi-scan-scanner-windows-kes
 #    restart: on-failure

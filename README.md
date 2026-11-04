@@ -1,8 +1,6 @@
-# MalwareMultiScan
+# Panoptes
 
-![Tests](https://github.com/mindcollapse/MalwareMultiScan/workflows/Tests/badge.svg?event=push) ![API](https://github.com/mindcollapse/MalwareMultiScan/workflows/API/badge.svg) ![UI](https://github.com/mindcollapse/MalwareMultiScan/workflows/UI/badge.svg)  ![Scanners](https://github.com/mindcollapse/MalwareMultiScan/workflows/Scanners/badge.svg?event=push)
-
-Self-hosted [VirusTotal](https://www.virustotal.com/) / [OPSWAT MetaDefender](https://metadefender.opswat.com/) wannabe API for scanning URLs and files by multiple antivirus solutions.
+A fork of [MalwareMultiScan](https://github.com/mindcollapse/MalwareMultiScan) v1.5 (MIT, (c) Volodymyr Smirnov) - self-hosted VirusTotal / OPSWAT MetaDefender wannabe API for scanning URLs and files by multiple antivirus solutions, rebuilt for local, the region-accessible operation.
 
 ![MalwareMultiScan UI](.github/img/malware-multi-scan-ui.gif)
 
