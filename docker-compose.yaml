@@ -183,6 +183,25 @@ services:
       args:
         - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
 
+  eset-scanner:
+    image: panoptes-scanner-eset:local
+    restart: on-failure
+    mem_limit: 1g
+    profiles: ["eset"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+      # set PANOPTES_ESET_STRICT=1 to refuse starting with stale modules
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: ESET.Dockerfile
+      args:
+        ESET_DEB_URL: ${ESET_DEB_URL:?set ESET_DEB_URL to the trial portal direct-download link}
+        PANOPTES_ESET_KEY: ${PANOPTES_ESET_KEY:-}
+
   mcafee-scanner:
     image: panoptes-scanner-mcafee:local
     restart: on-failure
