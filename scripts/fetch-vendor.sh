@@ -27,3 +27,18 @@ else
   echo "[fetch-vendor] NOTE: no kesl-bases.tar - KES will build WITHOUT virus databases."
   echo "               Export them from a Kaspersky-reachable machine (see header)."
 fi
+
+# McAfee engine: VirusScan Command Line for Linux64 6.0.4 eval. The old
+# b2b-download.mcafee.com URL redirects to the Trellix CDN, which still
+# serves the tarball but is unreachable from the region without the local proxy proxy
+# (127.0.0.1:10808 on this machine; see PANOPTES_FETCH_PROXY).
+TARBALL="$VENDOR/vscl-l64-604-e.tar.gz"
+if [ ! -f "$TARBALL" ]; then
+  echo "[fetch-vendor] downloading VSCAN Command Line 6.0.4 engine ..."
+  curl -sSL --fail --retry 3 -o "$TARBALL" \
+    'https://b2b-download.trellix.com/products/evaluation/vcl/l64/vscl-l64-604-e.tar.gz' \
+    || curl -sSL --fail --retry 3 -x "${PANOPTES_FETCH_PROXY:-http://127.0.0.1:10808}" -o "$TARBALL" \
+       'https://b2b-download.trellix.com/products/evaluation/vcl/l64/vscl-l64-604-e.tar.gz'
+else
+  echo "[fetch-vendor] $TARBALL already present"
+fi
