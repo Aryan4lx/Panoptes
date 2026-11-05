@@ -4,3 +4,6 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 MalwareMultiScan.Backends/Dockerfiles/vendor/
+
+.superpowers/
+build.log

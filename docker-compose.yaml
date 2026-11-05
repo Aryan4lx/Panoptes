@@ -151,6 +151,21 @@ services:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: KES.Dockerfile
 
+  escan-scanner:
+    image: panoptes-escanner:local
+    restart: on-failure
+    mem_limit: 1g
+    profiles: ["escan"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: EScan.Dockerfile
+
   comodo-scanner:
     image: panoptes-scanner-comodo:local
     restart: on-failure
