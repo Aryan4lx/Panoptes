@@ -194,13 +194,13 @@ services:
       - "REDIS_ADDRESS=redis:6379"
       - "CONSUL_ADDRESS=http://consul:8500"
       - "WORKER_COUNT=2"
-      # set PANOPTES_ESET_STRICT=1 to refuse starting with stale modules
+      # activation key consumed by eset-entrypoint.sh at runtime (never baked
+      # into the image); set PANOPTES_ESET_STRICT=1 to refuse starting
+      # unactivated
+      - "PANOPTES_ESET_KEY=${PANOPTES_ESET_KEY:-}"
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: ESET.Dockerfile
-      args:
-        ESET_DEB_URL: ${ESET_DEB_URL:-}
-        PANOPTES_ESET_KEY: ${PANOPTES_ESET_KEY:-}
 
   mcafee-scanner:
     image: panoptes-scanner-mcafee:local

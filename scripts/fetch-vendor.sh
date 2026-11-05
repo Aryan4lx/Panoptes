@@ -42,3 +42,16 @@ if [ ! -f "$TARBALL" ]; then
 else
   echo "[fetch-vendor] $TARBALL already present"
 fi
+
+# ESET Server Security for Linux: the "latest" portal link serves a
+# self-extracting installer; the build unpacks it with --accept-tou --no-install.
+BIN="$VENDOR/efs.x86_64.bin"
+if [ ! -f "$BIN" ]; then
+  echo "[fetch-vendor] downloading ESET Server Security installer (~268MB) ..."
+  curl -sSL --fail --retry 3 -o "$BIN" \
+    'https://download.eset.com/com/eset/apps/business/efs/linux/latest/efs.x86_64.bin' \
+    || curl -sSL --fail --retry 3 -x "${PANOPTES_FETCH_PROXY:-http://127.0.0.1:10808}" -o "$BIN" \
+       'https://download.eset.com/com/eset/apps/business/efs/linux/latest/efs.x86_64.bin'
+else
+  echo "[fetch-vendor] $BIN already present"
+fi
