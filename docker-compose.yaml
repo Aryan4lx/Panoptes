@@ -53,6 +53,14 @@ services:
       context: .
       dockerfile: MalwareMultiScan.Api/Dockerfile
 
+  # helper used by scripts/e2e-core.sh to generate + post the sample
+  # inside the compose network (never on the host filesystem)
+  curl:
+    image: curlimages/curl:8.10.1
+    profiles: ["e2e"]
+    entrypoint: ["sh"]
+    mem_limit: 64m
+
   dummy-scanner:
     image: panoptes-scanner:local
     restart: on-failure
