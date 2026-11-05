@@ -199,7 +199,7 @@ services:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: ESET.Dockerfile
       args:
-        ESET_DEB_URL: ${ESET_DEB_URL:?set ESET_DEB_URL to the trial portal direct-download link}
+        ESET_DEB_URL: ${ESET_DEB_URL:-}
         PANOPTES_ESET_KEY: ${PANOPTES_ESET_KEY:-}
 
   mcafee-scanner:
