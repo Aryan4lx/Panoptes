@@ -20,9 +20,9 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | Dr.Web 11.1 | DETECTED | updates at runtime (best-effort) | demo license re-fetched at build, stats daemon disabled |
 | eScan 7.0 | DETECTED | frozen bases at build + background update | works with stale shipped bases |
 | McAfee VSCAN 6.0.4 | DETECTED | frozen DATs at build (Nov 2026) + background update | 2013 engine still loads current DATs |
-| Windows Defender | pending | frozen engine cab | needs one engine export from a clean network (Microsoft rotated its engine, current cabs crash the open-source loader) |
-| Kaspersky KES 10.1.1 | pending | frozen bases export | installer + entrypoint done; bases export from a Kaspersky-reachable machine pending |
-| ESET Server Security | pending | frozen modules at build | needs trial keycode + portal installer URL |
+| Windows Defender | DETECTED | frozen engine cab + loader rebuilt from pinned loadlibrary | needs a one-time `docker cp` engine export from a machine where the Defender container already works (Microsoft rotates mpengine monthly; current cabs outgrow the dormant loader) |
+| Kaspersky KES 10.1.1 | DETECTED | frozen bases + license export | one-time `docker cp` of `/var/opt/kaspersky/kesl` from a Kaspersky-reachable machine |
+| ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
@@ -31,8 +31,15 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 ```bash
 # 1. fetch vendor installers the Docker build cannot reach (run on host)
 ./scripts/fetch-vendor.sh            # KES deb, McAfee engine tarball
-# optional frozen-database exports (see fetch-vendor.sh header for the recipe)
-#   vendor/kesl-bases.tar, vendor/escan-bases.tar
+# optional one-time frozen exports (recipes below)
+#   vendor/kesl-bases.tar, vendor/defender-engine.tgz - from a machine where
+#   those containers already work:
+#
+#   KES:      docker compose exec kes-scanner tar cC /var/opt/kaspersky kesl \
+#             | gzip > MalwareMultiScan.Backends/Dockerfiles/vendor/kesl-bases.tar
+#
+#   Defender: docker cp windows-defender-scanner-container:/opt/engine - \
+#             | gzip > MalwareMultiScan.Backends/Dockerfiles/vendor/defender-engine.tgz
 
 # 2. start the core
 docker compose up -d                 # api, ui, redis, mongo, consul, dummy-scanner
