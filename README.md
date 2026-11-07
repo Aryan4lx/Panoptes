@@ -24,7 +24,7 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | Kaspersky KES 10.1.1 | DETECTED | frozen bases + license export | one-time `docker cp` of `/var/opt/kaspersky/kesl` from a Kaspersky-reachable machine |
 | ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
-| Padvish (Amnpardaz) | dead end | - | regional AV, direct download works, but the Linux client is a management-console agent: the scan engine is IPC-server-only, no offline CLI scan mode, daemon refuses to serve without registration to their console; excluded (documented for future re-evaluation) |
+| Padvish (Amnpardaz) | dead end | - | the Linux client is a management-console agent: the scan engine is IPC-server-only, no offline CLI scan mode, daemon refuses to serve without registration to their console; excluded (documented for future re-evaluation) |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
 ## Quickstart
@@ -88,7 +88,7 @@ Scanners wrap the vendor command-line utility and parse its output with a regula
 ## Deployment notes
 
 - Target: plain Ubuntu server + Docker. Images build with `docker compose build` per profile; engines self-update at runtime only when the vendor CDN is reachable - otherwise they run on the baked databases.
-- On filtered networks set `PANOPTES_BUILD_PROXY=http://<proxy>:<port>` for build-time fetches and add `extra_hosts: ["host.docker.internal:host-gateway"]` so runtime updates can use the host proxy.
+- On restricted networks set `PANOPTES_BUILD_PROXY=http://<proxy>:<port>` for build-time fetches and add `extra_hosts: ["host.docker.internal:host-gateway"]` so runtime updates can use the host proxy.
 - The Windows Defender engine cab and KES databases are vendor-rotated; if e2e hard-fails after a vendor change, re-export per the recipes in `scripts/fetch-vendor.sh`.
 
 ### Running with a partial engine set
@@ -106,7 +106,7 @@ Engines are independent compose profiles - nothing breaks when some cannot be do
 cd Panoptes
 
 # 1. fetch vendor installers the build cannot reach (KES deb, McAfee tarball;
-#    reaches vendor CDNs directly from the region, falls back to PANOPTES_FETCH_PROXY)
+#    tries direct downloads first, falls back to PANOPTES_FETCH_PROXY)
 bash scripts/fetch-vendor.sh
 
 # 2. drop in the one-time frozen exports if you have them (else engines

@@ -30,8 +30,8 @@ fi
 
 # McAfee engine: VirusScan Command Line for Linux64 6.0.4 eval. The old
 # b2b-download.mcafee.com URL redirects to the Trellix CDN, which still
-# serves the tarball but is unreachable from the region without the local proxy proxy
-# (127.0.0.1:10808 on this machine; see PANOPTES_FETCH_PROXY).
+# serves the tarball but is unreachable on some networks without a proxy
+# (see PANOPTES_FETCH_PROXY).
 TARBALL="$VENDOR/vscl-l64-604-e.tar.gz"
 if [ ! -f "$TARBALL" ]; then
   echo "[fetch-vendor] downloading VSCAN Command Line 6.0.4 engine ..."

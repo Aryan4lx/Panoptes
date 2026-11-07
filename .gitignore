@@ -7,3 +7,5 @@ MalwareMultiScan.Backends/Dockerfiles/vendor/
 
 .superpowers/
 build.log
+
+docs/superpowers/
