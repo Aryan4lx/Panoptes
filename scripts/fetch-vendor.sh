@@ -55,3 +55,17 @@ if [ ! -f "$BIN" ]; then
 else
   echo "[fetch-vendor] $BIN already present"
 fi
+
+# Dr.Web 11.1 installer (~633MB): the CDN (cdn-download.drweb.com, edgecdn.ru)
+# sometimes stalls mid-transfer; the build falls back to fetching it itself if
+# this file is absent, but vendoring it makes drweb builds deterministic.
+DRWEB="$VENDOR/drweb.run"
+if [ ! -f "$DRWEB" ]; then
+  echo "[fetch-vendor] downloading Dr.Web 11.1 installer (~633MB) ..."
+  curl -sSL --fail --retry 3 -C - -o "$DRWEB" \
+    'https://cdn-download.drweb.com/pub/drweb/unix/workstation/11.1/drweb-11.1.5-av-linux-amd64.run' \
+    || curl -sSL --fail --retry 3 -C - -x "${PANOPTES_FETCH_PROXY:-http://127.0.0.1:10808}" -o "$DRWEB" \
+       'https://cdn-download.drweb.com/pub/drweb/unix/workstation/11.1/drweb-11.1.5-av-linux-amd64.run'
+else
+  echo "[fetch-vendor] $DRWEB already present"
+fi

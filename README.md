@@ -24,6 +24,7 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | Kaspersky KES 10.1.1 | DETECTED | frozen bases + license export | one-time `docker cp` of `/var/opt/kaspersky/kesl` from a Kaspersky-reachable machine |
 | ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
+| Padvish (Amnpardaz) | dead end | - | regional AV, direct download works, but the Linux client is a management-console agent: the scan engine is IPC-server-only, no offline CLI scan mode, daemon refuses to serve without registration to their console; excluded (documented for future re-evaluation) |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
 ## Quickstart
@@ -89,6 +90,47 @@ Scanners wrap the vendor command-line utility and parse its output with a regula
 - Target: plain Ubuntu server + Docker. Images build with `docker compose build` per profile; engines self-update at runtime only when the vendor CDN is reachable - otherwise they run on the baked databases.
 - On filtered networks set `PANOPTES_BUILD_PROXY=http://<proxy>:<port>` for build-time fetches and add `extra_hosts: ["host.docker.internal:host-gateway"]` so runtime updates can use the host proxy.
 - The Windows Defender engine cab and KES databases are vendor-rotated; if e2e hard-fails after a vendor change, re-export per the recipes in `scripts/fetch-vendor.sh`.
+
+### Running with a partial engine set
+
+Engines are independent compose profiles - nothing breaks when some cannot be downloaded or built:
+
+- The core (`api`, `ui`, `redis`, `mongo`, `consul`, `dummy-scanner`) has no profile and always starts. The API works even with zero engines (every scan then reports `TIMEOUT`).
+- Build/start engines individually (`docker compose --profile drweb build drweb-scanner`, then `up -d`). A failing engine build never takes down the core or other engines - avoid batching all profiles in one `up` command on a flaky network, because one failed build aborts the batch.
+- Missing engines simply show a `TIMEOUT` verdict per scan; `e2e-core.sh` exits non-zero listing them. Add engines later without touching the rest.
+
+### Fresh Ubuntu VM runbook (ESXi)
+
+```bash
+# on the VM (Ubuntu 22.04+ with Docker + git clone of this repo)
+cd Panoptes
+
+# 1. fetch vendor installers the build cannot reach (KES deb, McAfee tarball;
+#    reaches vendor CDNs directly from the region, falls back to PANOPTES_FETCH_PROXY)
+bash scripts/fetch-vendor.sh
+
+# 2. drop in the one-time frozen exports if you have them (else engines
+#    still build, they just self-update or run stale until exported):
+#    vendor/kesl-bases.tar (962MB), vendor/defender-engine.tgz (98MB),
+#    vendor/drweb.run (633MB, fetch-vendor.sh downloads it)
+
+# 3. build everything reachable, one profile at a time
+for p in clamav drweb escan mcafee windows-defender kes; do
+  docker compose --profile $p build || echo "SKIP $p"
+done
+
+# 4. start core + whatever built
+docker compose up -d
+for p in clamav drweb escan mcafee windows-defender kes; do
+  docker compose --profile $p up -d || true
+done
+
+# 5. verify (all green engines must DETECT EICAR)
+ENGINES="dummy clamav windows-defender drweb kes mcafee escan" PANOPTES_TIMEOUT=300 \
+  bash scripts/e2e-core.sh
+```
+
+UI on :8888, API on :5000 inside the compose network. Engines that failed to build show `TIMEOUT` until you add them - see "Running with a partial engine set".
 
 ## Credits
 
