@@ -129,6 +129,11 @@ services:
     restart: on-failure
     mem_limit: 1g
     profiles: ["drweb"]
+    volumes:
+      # Demo-key requests are vendor-throttled; persist the fetched key so
+      # container recreation does not need a new one. Refresh by re-running
+      # drweb-ctl license --GetDemo in the container and copying the key out.
+      - ./MalwareMultiScan.Backends/Dockerfiles/vendor/drweb32.key:/etc/opt/drweb.com/drweb32.key:ro
     depends_on:
       - dummy-scanner
     environment:
