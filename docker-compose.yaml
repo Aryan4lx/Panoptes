@@ -92,6 +92,8 @@ services:
       dockerfile: Clamav.Dockerfile
       args:
         - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
   windows-defender-scanner:
     image: panoptes-scanner-windows-defender:local
@@ -131,6 +133,8 @@ services:
       dockerfile: DrWeb.Dockerfile
       args:
         - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
   kes-scanner:
     image: panoptes-scanner-kes:local
@@ -152,6 +156,9 @@ services:
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: KES.Dockerfile
+      args:
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
   escan-scanner:
     image: panoptes-escanner:local
@@ -167,6 +174,9 @@ services:
     build:
       context: MalwareMultiScan.Backends/Dockerfiles
       dockerfile: EScan.Dockerfile
+      args:
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
   comodo-scanner:
     image: panoptes-scanner-comodo:local
@@ -184,6 +194,8 @@ services:
       dockerfile: Comodo.Dockerfile
       args:
         - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
   eset-scanner:
     image: panoptes-scanner-eset:local
@@ -220,6 +232,8 @@ services:
       dockerfile: McAfee.Dockerfile
       args:
         - "HTTP_PROXY=${PANOPTES_BUILD_PROXY:-}"
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
 # eset-scanner and escan-scanner services are added by their engine tasks.
 
