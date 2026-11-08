@@ -47,8 +47,10 @@ docker build -f MalwareMultiScan.Scanner/scanner-base.Dockerfile \
   -t panoptes-scanner-base:local .
 # on restricted networks where deb.debian.org is unreachable, point apt
 # at a mirror (same env var for the windows-defender compose build):
-#   --build-arg DEBIAN_MIRROR=https://mirror.yandex.ru/debian \
-#   --build-arg DEBIAN_SECURITY_MIRROR=https://mirror.yandex.ru/debian-security
+#   --build-arg DEBIAN_MIRROR=https://mirror.yandex.ru \
+#   --build-arg DEBIAN_SECURITY_MIRROR=https://mirror.yandex.ru
+# (args replace the host part only - the /debian and /debian-security
+# suite paths come from the stock sources file)
 
 # 3. start the core
 docker compose up -d                 # api, ui, redis, mongo, consul, dummy-scanner
