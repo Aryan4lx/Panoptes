@@ -23,6 +23,9 @@ services:
 
   ui:
     image: panoptes-ui:local
+    # optional: the web dashboard - engines + API run without it, and hosts
+    # that cannot build the node image still get a working scanner
+    profiles: ["ui"]
     restart: on-failure
     mem_limit: 512m
     ports:
