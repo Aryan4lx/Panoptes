@@ -42,13 +42,21 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 #   Defender: docker cp windows-defender-scanner-container:/opt/engine - \
 #             | gzip > MalwareMultiScan.Backends/Dockerfiles/vendor/defender-engine.tgz
 
-# 2. start the core
+# 2. build the shared scanner base image (engines inherit it)
+docker build -f MalwareMultiScan.Scanner/scanner-base.Dockerfile \
+  -t panoptes-scanner-base:local .
+# on restricted networks where deb.debian.org is unreachable, point apt
+# at a mirror (same env var for the windows-defender compose build):
+#   --build-arg DEBIAN_MIRROR=https://mirror.yandex.ru/debian \
+#   --build-arg DEBIAN_SECURITY_MIRROR=https://mirror.yandex.ru/debian-security
+
+# 3. start the core
 docker compose up -d                 # api, ui, redis, mongo, consul, dummy-scanner
 
-# 3. add engines (each is a compose profile)
+# 4. add engines (each is a compose profile)
 docker compose --profile clamav --profile drweb up -d
 
-# 4. verify end to end
+# 5. verify end to end
 ENGINES="clamav drweb" ./scripts/e2e-core.sh
 ```
 
@@ -71,6 +79,8 @@ API / Scanner configuration is via environment variables (see `MalwareMultiScan.
 | `WORKER_COUNT` | `1` | scan workers per scanner container |
 | `PANOPTES_TIMEOUT` | `120` | seconds before a scan result is marked TIMEOUT |
 | `PANOPTES_UPDATE_ATTEMPTS` | `6` | database-update retries at engine startup |
+| `PANOPTES_DEBIAN_MIRROR` | `https://deb.debian.org` | Debian mirror for apt during image builds (pass through to the base image build and engine builds) |
+| `PANOPTES_DEBIAN_SECURITY_MIRROR` | `https://deb.debian.org` | Debian security mirror, same usage |
 | `PANOPTES_<ENGINE>_STRICT` | unset | set to `1` to refuse starting an engine whose database update failed (default: stale databases keep serving) |
 
 ### Build-time vendoring
