@@ -52,6 +52,10 @@ services:
     build:
       context: .
       dockerfile: MalwareMultiScan.Api/Dockerfile
+      additional_contexts:
+        # offline restore: PANOPTES_NUGET_CACHE=<extracted cache dir>; default
+        # placeholder dir restores from nuget.org
+        nuget-cache: ${PANOPTES_NUGET_CACHE:-./MalwareMultiScan.Api/nuget-cache-placeholder}
 
   # helper used by scripts/e2e-core.sh to generate + post the sample
   # inside the compose network (never on the host filesystem)
