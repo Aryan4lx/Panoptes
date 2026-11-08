@@ -256,7 +256,8 @@ services:
   mcafee-scanner:
     image: panoptes-scanner-mcafee:local
     restart: on-failure
-    mem_limit: 512m
+    # uvscan cold DAT load OOM-kills under 512m (exit 137)
+    mem_limit: 1g
     profiles: ["mcafee"]
     depends_on:
       - dummy-scanner
