@@ -197,6 +197,22 @@ services:
         - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
         - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
+  padvish-scanner:
+    image: panoptes-scanner-padvish:local
+    restart: on-failure
+    mem_limit: 1g
+    profiles: ["padvish"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+      - "MAX_SCANNING_TIME=900"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: Padvish.Dockerfile
+
   comodo-scanner:
     image: panoptes-scanner-comodo:local
     restart: on-failure

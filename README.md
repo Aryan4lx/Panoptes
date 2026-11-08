@@ -24,7 +24,7 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | Kaspersky KES 10.1.1 | DETECTED | frozen bases + license export | one-time `docker cp` of `/var/opt/kaspersky/kesl` from a Kaspersky-reachable machine |
 | ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
-| Padvish (Amnpardaz) | dead end | - | the Linux client is a management-console agent: the scan engine is IPC-server-only, no offline CLI scan mode, daemon refuses to serve without registration to their console; excluded (documented for future re-evaluation) |
+| Padvish 3.2.152.537 | DETECTED | fully vendored (offline bundle + Windows companion DB) | regional vendor, no proxy needed; build-time EICAR check |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
 ## Quickstart
@@ -66,7 +66,7 @@ Web UI: http://localhost:8888 - API: http://localhost:5000 (`POST /api/queue/url
 
 ### Profiles
 
-`clamav` `drweb` `mcafee` `escan` `kes` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
+`clamav` `drweb` `mcafee` `escan` `kes` `padvish` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
 
 ### Environment
 
@@ -127,18 +127,18 @@ bash scripts/fetch-vendor.sh
 #    vendor/drweb.run (633MB, fetch-vendor.sh downloads it)
 
 # 3. build everything reachable, one profile at a time
-for p in clamav drweb escan mcafee windows-defender kes; do
+for p in clamav drweb escan mcafee windows-defender kes padvish; do
   docker compose --profile $p build || echo "SKIP $p"
 done
 
 # 4. start core + whatever built
 docker compose up -d
-for p in clamav drweb escan mcafee windows-defender kes; do
+for p in clamav drweb escan mcafee windows-defender kes padvish; do
   docker compose --profile $p up -d || true
 done
 
 # 5. verify (all green engines must DETECT EICAR)
-ENGINES="dummy clamav windows-defender drweb kes mcafee escan" PANOPTES_TIMEOUT=300 \
+ENGINES="dummy clamav windows-defender drweb kes mcafee escan padvish" PANOPTES_TIMEOUT=300 \
   bash scripts/e2e-core.sh
 ```
 
