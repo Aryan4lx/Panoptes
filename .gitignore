@@ -9,3 +9,4 @@ MalwareMultiScan.Backends/Dockerfiles/vendor/
 build.log
 
 docs/superpowers/
+.env
