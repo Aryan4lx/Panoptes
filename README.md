@@ -64,6 +64,22 @@ ENGINES="clamav drweb" ./scripts/e2e-core.sh
 
 Web UI: http://localhost:8888 - API: http://localhost:5000 (`POST /api/queue/url`, `POST /api/queue/file`).
 
+### One-command operations
+
+`scripts/panoptes.sh` wraps the everyday jobs (see `./scripts/panoptes.sh help`):
+
+```bash
+./scripts/panoptes.sh up                     # core + every engine
+./scripts/panoptes.sh update-dbs             # fresh signature DBs: rebuild + recreate
+./scripts/panoptes.sh set-key eset XXXX-...  # store keycode in .env, rebuild ESET
+./scripts/panoptes.sh kes-freeze bases.tar   # import fresh KES bases export
+./scripts/panoptes.sh e2e                    # full end-to-end scan test (900s timeout)
+./scripts/panoptes.sh status
+```
+
+Signature-database refreshes simply rebuild images (databases are baked in at build time with
+best-effort refresh at container start) - `update-dbs` is the periodic maintenance command.
+
 ### Profiles
 
 `clamav` `drweb` `mcafee` `escan` `kes` `padvish` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
