@@ -51,9 +51,8 @@ signatures - see `docs/ARCHITECTURE.md`). It will not meaningfully detect Linux 
 | eScan | Windows, Linux, Android + document/script | Microworld engine |
 | Padvish | Windows, Linux, Android | vendor claims; `padvishctl sigcount` = 6M+ signatures, DB shipped via apbundle |
 
-The virtual machines hosting these engines are currently offline (VPN); a hands-on
-verification pass (listing each vendor's base metadata, e.g. `drweb-ctl base`,
-`kesl-control --app-info`) can be attached here when the VM is reachable. It is expected to
+A hands-on verification pass (listing each vendor's base metadata, e.g. `drweb-ctl base`,
+`kesl-control --app-info`) can be attached here from a running deployment. It is expected to
 confirm the vendor claims - none of these vendors ship "Linux-only" databases.
 
 ## Proven multi-engine detection

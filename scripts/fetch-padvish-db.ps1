@@ -1,7 +1,7 @@
 # Builds MalwareMultiScan.Backends/Dockerfiles/vendor/padvish-db.tar
 # (signature database for the Padvish engine image).
 #
-# Sources (all the deployment region-only or local-only - never reachable from the build
+# Sources (vendor CDN or local-only - never reachable from the build
 # container, which is why this script exists):
 #   1. Offline bundle   https://update.amnpardaz.com/latest/signature.apbundle
 #      -> becomes /etc/apav/apav_003.dat in the image (the daemon parses

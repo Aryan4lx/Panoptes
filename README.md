@@ -24,7 +24,7 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | Kaspersky KES 10.1.1 | DETECTED | frozen bases + license export | one-time `docker cp` of `/var/opt/kaspersky/kesl` from a Kaspersky-reachable machine |
 | ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
-| Padvish 3.2.152.537 | DETECTED | fully vendored (offline bundle + Windows companion DB) | regional vendor, no proxy needed; build-time EICAR check |
+| Padvish 3.2.152.537 | DETECTED | fully vendored (offline bundle + Windows companion DB) | vendor-direct download, no proxy needed; build-time EICAR check |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
 ## Quickstart
@@ -127,7 +127,7 @@ Engines are independent compose profiles - nothing breaks when some cannot be do
 - Build/start engines individually (`docker compose --profile drweb build drweb-scanner`, then `up -d`). A failing engine build never takes down the core or other engines - avoid batching all profiles in one `up` command on a flaky network, because one failed build aborts the batch.
 - Missing engines simply show a `TIMEOUT` verdict per scan; `e2e-core.sh` exits non-zero listing them. Add engines later without touching the rest.
 
-### Fresh Ubuntu VM runbook (ESXi)
+### Fresh Ubuntu server runbook
 
 ```bash
 # on the VM (Ubuntu 22.04+ with Docker + git clone of this repo)

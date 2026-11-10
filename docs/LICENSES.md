@@ -6,16 +6,16 @@ listed numbers as reference points, not fixed tags.** Purchase decisions at the 
 
 ## Summary table
 
-| Engine | Exact product to buy | Price reference (USD, 1 year) | Trial without paying | the deployment region purchase channel |
-|--------|----------------------|-------------------------------|----------------------|-----------------------|
+| Engine | Exact product to buy | Price reference (USD, 1 year) | Trial without paying | Purchase channel |
+|--------|----------------------|-------------------------------|----------------------|------------------|
 | ClamAV | nothing - free software (GPLv2) | $0 | n/a | n/a |
 | Windows Defender (loadlibrary) | no purchasable license exists for this use | n/a | n/a | n/a |
-| Dr.Web | Dr.Web Enterprise Security Suite - **Server Security Suite (for Unix)** component, per seat/server | ~$15-40 /seat/yr (business tier, partner quote) | yes - 30-day demo, auto-refetched by our entrypoint (proven working) | Intl: partner/reseller; RU store needs RU payment |
-| Kaspersky (KES) | **Kaspersky Endpoint Security for Business - Select** (includes KES for Linux) | ~$50-60 /node/yr for the 10-14 node band (street price; official price = partner quote) | yes - 30-day trial keys from a Kaspersky business portal account | Kaspersky CDN/download is reachable from the deployment region; license purchase via partner. the deployment region status: Kaspersky returned to the regional market in 2024, but government agencies were warned off it - private use is your call |
-| ESET | **ESET Server Security for Linux** (business line, sold in seat packs, 4-seat minimum) | ~$125 (4 seats, 1 yr) to ~$2,170 (large packs); ~$217 /10 seats street reference | yes - 30-day business trial keycode (portal account), renewable by new registrations | download.eset.com reachable from the deployment region; buy key via ESET store/intl reseller |
-| McAfee / Trellix | Trellix **VirusScan Command Line Scanner (CLS)** - per-system annual license | quote-only (enterprise vendor, no public pricing) | 30-day eval historically available | **No legal the deployment region channel** (US company). Treat as an eval-only bonus engine; do not plan purchases |
-| eScan | **eScan Corporate Edition (Hybrid)** - per user/seat, annual | ~$13-24 /user/yr (India list ~Rs 1,700-2,000; intl resellers ~EUR 13) | 30-day trial | Indian vendor, sells through resellers incl. regional channels; escanav.com / mwti.net reachable from the deployment region |
-| Padvish | AmnPardaz **Padvish Corporate / سازمانی** (per seat, annual; consumer line = پادویش خانگی) | consumer ref: ~15,000,000 rial / 5 users / yr; corporate = quote | trial via vendor (Rgc registration file) | **Easiest of all**: regional vendor, padvish.com + resellers (ayco.ir), rial payment, update server is in the deployment region |
+| Dr.Web | Dr.Web Enterprise Security Suite - **Server Security Suite (for Unix)** component, per seat/server | ~$15-40 /seat/yr (business tier, partner quote) | yes - 30-day demo, auto-refetched by our entrypoint (proven working) | partner/reseller network; RU store needs RU payment |
+| Kaspersky (KES) | **Kaspersky Endpoint Security for Business - Select** (includes KES for Linux) | ~$50-60 /node/yr for the 10-14 node band (street price; official price = partner quote) | yes - 30-day trial keys from a Kaspersky business portal account | license purchase via partner |
+| ESET | **ESET Server Security for Linux** (business line, sold in seat packs, 4-seat minimum) | ~$125 (4 seats, 1 yr) to ~$2,170 (large packs); ~$217 /10 seats street reference | yes - 30-day business trial keycode (portal account), renewable by new registrations | ESET store / international reseller |
+| McAfee / Trellix | Trellix **VirusScan Command Line Scanner (CLS)** - per-system annual license | quote-only (enterprise vendor, no public pricing) | 30-day eval historically available | enterprise sales only; treat as an eval-only bonus engine, do not plan purchases |
+| eScan | **eScan Corporate Edition (Hybrid)** - per user/seat, annual | ~$13-24 /user/yr (India list ~Rs 1,700-2,000; intl resellers ~EUR 13) | 30-day trial | Indian vendor, sells through international resellers |
+| Padvish | AmnPardaz **Padvish Corporate** (per seat, annual; consumer line exists) | consumer ref: ~15,000,000 IRR / 5 users / yr; corporate = quote | trial via vendor (Rgc registration file) | **Easiest of all**: vendor-direct at padvish.com or resellers |
 
 ## Details and gotchas per engine
 
@@ -52,9 +52,6 @@ this container. Keep this engine as a best-effort bonus.
 - **Trial behavior:** 30-day trial keys from a My Kaspersky business account; renewable with new
   registrations. Our frozen bases import carries a trial that **expires 2026-11-18** - either
   re-freeze from a fresh trial or buy Select.
-- the deployment region: Kaspersky resumed official presence in 2024; the download CDN is reachable from the deployment region
-  without proxy (verified). Buying through an regional partner is possible; government use is
-  warned against - private/company use is the owner's call.
 
 ### ESET
 - **Exact SKU:** ESET **Server Security for Linux** (business line, replaces the older "ESET
@@ -65,14 +62,14 @@ this container. Keep this engine as a best-effort bonus.
 - Activation: one keycode activates N seats on the server (`/opt/eset/efs/bin/lic --key`).
 - **Trial behavior:** ESET business trial = 30-day keycode via a free business portal account;
   renewable by registering new accounts. Our build accepts any valid keycode at build time.
-- the deployment region: ESET download servers are reachable from the deployment region (verified); purchase needs an
-  international payment card (sanctions limitation - see "Paying from the deployment region" below).
+- Purchase needs an international payment card (regional availability varies - see
+  "Payment notes" below).
 
 ### McAfee / Trellix
 - **Exact SKU:** Trellix VirusScan **Command Line Scanner** (the `uvscan` tool we ship),
   licensed per system, annual. No public price list - enterprise sales quote only.
-- **Sanctions reality:** Trellix is a US company; there is no sanctioned purchase channel from
-  the deployment region. Realistically this engine stays on the 30-day eval or the vendored 2026 DAT files.
+- **Availability reality:** Trellix is a US company with a restricted resale network; treat
+  this engine as eval-only (30-day eval or the vendored DAT files).
 - Verdict: **do not budget for it**; keep it as a bonus engine.
 
 ### eScan (Microworld)
@@ -81,18 +78,17 @@ this container. Keep this engine as a best-effort bonus.
 - Public India list pricing is about **Rs 1,700-2,000 / user / year (~$13-24)**; international
   resellers advertise around **EUR 13/user/year**. Volume discounts from the 25-user band.
 - **Trial behavior:** 30-day trial keys from their site; renewable.
-- the deployment region: Microworld is Indian (no sanctions problem) and has reseller channels reaching the deployment region;
-  download servers are reachable from the deployment region directly (verified).
+- Microworld is an Indian vendor selling through international resellers; download servers are
+  publicly reachable.
 
 ### Padvish (AmnPardaz) - the "buy this first" engine
-- **Exact SKU:** Padvish **سازمانی (Corporate)** per-seat annual for servers; consumer line
-  (خانگی) exists but a scanning service should use the corporate tier.
-- Public consumer reference: **~15,000,000 rial / 5 users / year**; corporate pricing is a
+- **Exact SKU:** Padvish **Corporate** per-seat annual for servers; the consumer line exists
+  but a scanning service should use the corporate tier.
+- Public consumer reference: **~15,000,000 IRR / 5 users / year**; corporate pricing is a
   quote from the vendor (padvish.com) or resellers (ayco.ir).
 - **Trial behavior:** vendor issues a trial registration file; renewable on request.
-- the deployment region: it is an regional vendor - rial payment, local support, and the signature update server
-  (`update.amnpardaz.com`) is inside the deployment region and fast (verified 200 OK direct). This is the
-  cheapest, most maintainable paid engine for this deployment.
+- The signature update server (`update.amnpardaz.com`) is vendor-operated and fast. This is
+  the cheapest, most maintainable paid engine for this deployment.
 
 ## Trial-reuse reality check (one place, honest)
 
@@ -103,22 +99,23 @@ this container. Keep this engine as a best-effort bonus.
 | Dr.Web | **Yes in practice** - demos are re-issuable and our heal loop automates them; expect occasional throttling. Buy when stability matters. |
 | KES | Short-term yes (new 30-day keys), but each re-freeze means re-exporting bases; friction grows. Buy Select. |
 | ESET | Yes for testing (new portal accounts give 30-day keys); ESET has fraud protection, so automated churn is risky. Buy for production. |
-| McAfee | Historically yes via re-registered evals; sanctions risk makes this moot. |
+| McAfee | Historically yes via re-registered evals; availability restrictions make this moot. |
 | eScan | Yes, 30-day trials renewable; cheap enough to just buy. |
 | Padvish | Trial by vendor request; renewals are informal. Buy corporate seats - it is the cheapest. |
 
-## Paying from the deployment region (practical note)
+## Payment notes (practical)
 
-International card payments (Visa/Mastercard direct) are blocked by sanctions. Working routes:
-1. **Padvish + eScan** - payable in rial / through regional resellers (no foreign card needed).
-2. **Kaspersky / Dr.Web** - via resellers active in the deployment region (both vendors have regional presence).
-3. **ESET** - needs an international card or a third-party purchasing service; the trial keycode
-   path avoids payment entirely for the first month.
-4. **Trellix** - no legal channel; skip.
+Card acceptance and vendor availability differ by region; resellers bridge the gap:
+1. **Padvish + eScan** - regional/local resellers handle payment end-to-end (no international
+   card needed).
+2. **Kaspersky / Dr.Web** - both vendors maintain regional reseller networks.
+3. **ESET** - typically needs an international payment card or a purchasing service; the trial
+   keycode path avoids payment entirely for the first month.
+4. **Trellix** - enterprise sales only; skip.
 
 ## Recommended purchase list (opinionated)
 
-1. **Padvish Corporate** - cheapest, local, fully supported pipeline already in Panoptes.
+1. **Padvish Corporate** - cheapest, fully supported pipeline already in Panoptes.
 2. **Kaspersky KES Select** (10-node band minimum) - strongest multi-platform detection.
 3. **ESET Server Security for Linux** (4-seat pack) - good Linux detection, easy key.
 4. **eScan Corporate** - optional 4th paid engine.

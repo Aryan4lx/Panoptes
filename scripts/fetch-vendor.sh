@@ -2,7 +2,8 @@
 # Run on the HOST before building kes: containers on this network get 403 from
 # products.s.kaspersky-labs.com (Docker-VM routing anomaly), the host does not.
 #
-# KES bases: on a network that reaches Kaspersky (e.g. the work ESXi), run
+# KES bases: on a machine that reaches Kaspersky (e.g. any host outside the
+# restricted build network), run
 #   docker compose --profile kes up -d
 #   docker compose exec kes-scanner tar cC /var/opt/kaspersky kesl > MalwareMultiScan.Backends/Dockerfiles/vendor/kesl-bases.tar
 # and copy the tarball next to this script - the image build imports it, so
