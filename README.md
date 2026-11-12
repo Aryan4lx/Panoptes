@@ -6,9 +6,49 @@ Fork of [MalwareMultiScan](https://github.com/mindcollapse/MalwareMultiScan) v1.
 
 ![MalwareMultiScan UI](.github/img/malware-multi-scan-ui.gif)
 
+## How it works
+
+```mermaid
+flowchart LR
+    UI["Web UI / API client"]
+
+    subgraph CORE["API - .NET 8"]
+        FANOUT["fan-out\n(Hangfire)"]
+        DOWNLOAD["sample download\nendpoint"]
+    end
+
+    STORE[("MongoDB\nsample + results")]
+    QUEUES[["Redis\none queue per engine"]]
+
+    subgraph ENGINES["engine containers - one per antivirus"]
+        direction TB
+        E1["ClamAV"]
+        E2["Dr.Web"]
+        E3["KES"]
+        E4["Defender"]
+        E5["...more"]
+    end
+
+    UI -- "submit file / URL" --> FANOUT
+    FANOUT -- "store sample" --> STORE
+    FANOUT -- "enqueue per engine" --> QUEUES
+    QUEUES -- "job for its engine" --> ENGINES
+    ENGINES -- "pull sample" --> DOWNLOAD
+    DOWNLOAD -- "stream from GridFS" --> STORE
+    ENGINES -- "verdict + duration" --> FANOUT
+    FANOUT -- "merge results" --> STORE
+    UI -- "poll /api/results/:id" --> STORE
+```
+
+**Sample isolation:** the uploaded file lives in MongoDB inside the cluster. Each engine
+container pulls its own copy over the internal network, writes it to a temp file, scans it
+**statically** (vendor CLI parsers - the sample is never executed), and deletes the temp file
+when the scan ends. Engine containers have no host filesystem mounts and no Docker socket.
+The Windows/Ubuntu host never touches the sample.
+
 ## Why
 
-VirusTotal was not an option: data residency, file samples leaving the network, and regional blocking. Panoptes keeps everything local: files never leave your infrastructure, engines update from vendor CDNs (optionally through a proxy), scans run in isolated throwaway containers.
+VirusTotal was not an option: data residency, file samples leaving the network, and regional blocking. Panoptes keeps everything local: files never leave your infrastructure, engines update from vendor CDNs (optionally through a proxy), scans run inside isolated engine containers on your own Docker host.
 
 **Note**: Panoptes is not intended as a publicly-facing API/UI. It has no authorization, authentication, rate-limiting, or logging - use it internally or behind a restrictive gateway.
 
@@ -108,7 +148,7 @@ Vendor installers and frozen databases live in `MalwareMultiScan.Backends/Docker
 ## Architecture
 
 - **API** - .NET 8 + Hangfire (Redis queues) + MongoDB result store. Enqueues scans, aggregates results, serves the UI.
-- **Scanners** - one container per engine, from a shared `panoptes-scanner-base:local` image (.NET 8 runtime + worker). Each registers in Consul with its engine id; the API only dispatches to registered scanners.
+- **Scanners** - one long-lived container per engine (not per sample), from a shared `panoptes-scanner-base:local` image (.NET 8 runtime + worker). Each registers in Consul with its engine id; the API only dispatches to registered scanners. A sample exists inside the engine container only for the duration of its scan (temp file, deleted afterwards).
 - **UI** - Nuxt demo frontend.
 
 Scanners wrap the vendor command-line utility and parse its output with a regular expression (see `MalwareMultiScan.Backends/Backends/`). Adding an engine = one Dockerfile + one backend class + one compose service.
