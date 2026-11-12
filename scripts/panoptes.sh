@@ -108,8 +108,12 @@ finish() {
 
 upsert_env() { #upsert_env KEY VALUE
   touch "$ENV_FILE"
-  if grep -q "^$1=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s|^$1=.*|$1=$2|" "$ENV_FILE"
+  # escape sed metacharacters (keys/values could otherwise contain & | \)
+  local k esc
+  k=$(printf '%s' "$1" | sed 's/[&|\\]/\\&/g')
+  esc=$(printf '%s' "$2" | sed 's/[&|\\]/\\&/g')
+  if grep -q "^$k=" "$ENV_FILE" 2>/dev/null; then
+    sed -i "s|^$k=.*|$k=$esc|" "$ENV_FILE"
   else
     echo "$1=$2" >> "$ENV_FILE"
   fi
@@ -139,7 +143,7 @@ shift || true
 case "$cmd" in
   up)
     require_compose
-    engines="${1:-$ALL_ENGINES}"
+    engines="${*:-$ALL_ENGINES}"
     say "Starting core services..."
     if ! docker compose up -d; then
       FAILED+=("core")
