@@ -197,11 +197,11 @@ services:
         - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
         - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
-  yara-scanner:
-    image: panoptes-scanner-yara:local
+  yara-forge-scanner:
+    image: panoptes-scanner-yara-forge:local
     restart: on-failure
     mem_limit: 512m
-    profiles: ["yara"]
+    profiles: ["yara-forge"]
     depends_on:
       - dummy-scanner
     environment:

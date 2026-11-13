@@ -33,7 +33,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-ALL_ENGINES="dummy clamav windows-defender drweb kes eset escan mcafee padvish"
+ALL_ENGINES="dummy clamav windows-defender drweb kes eset escan mcafee padvish yara-forge"
 DB_ENGINES="clamav windows-defender drweb kes eset escan mcafee padvish"
 ENV_FILE=".env"
 VENDOR="MalwareMultiScan.Backends/Dockerfiles/vendor"

@@ -123,7 +123,7 @@ best-effort refresh at container start) - `update-dbs` is the periodic maintenan
 
 ### Profiles
 
-`clamav` `drweb` `mcafee` `escan` `kes` `padvish` `yara` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
+`clamav` `drweb` `mcafee` `escan` `kes` `padvish` `yara-forge` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
 
 ### Environment
 
@@ -184,18 +184,18 @@ bash scripts/fetch-vendor.sh
 #    vendor/drweb.run (633MB, fetch-vendor.sh downloads it)
 
 # 3. build everything reachable, one profile at a time
-for p in clamav drweb escan mcafee windows-defender kes padvish yara; do
+for p in clamav drweb escan mcafee windows-defender kes padvish yara-forge; do
   docker compose --profile $p build || echo "SKIP $p"
 done
 
 # 4. start core + whatever built
 docker compose up -d
-for p in clamav drweb escan mcafee windows-defender kes padvish yara; do
+for p in clamav drweb escan mcafee windows-defender kes padvish yara-forge; do
   docker compose --profile $p up -d || true
 done
 
 # 5. verify (all green engines must DETECT EICAR)
-ENGINES="dummy clamav windows-defender drweb kes mcafee escan padvish yara" PANOPTES_TIMEOUT=300 \
+ENGINES="dummy clamav windows-defender drweb kes mcafee escan padvish yara-forge" PANOPTES_TIMEOUT=300 \
   bash scripts/e2e-core.sh
 ```
 
