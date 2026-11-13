@@ -197,6 +197,25 @@ services:
         - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
         - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
 
+  yara-scanner:
+    image: panoptes-scanner-yara:local
+    restart: on-failure
+    mem_limit: 512m
+    profiles: ["yara"]
+    depends_on:
+      - dummy-scanner
+    environment:
+      - "REDIS_ADDRESS=redis:6379"
+      - "CONSUL_ADDRESS=http://consul:8500"
+      - "WORKER_COUNT=2"
+      - "MAX_SCANNING_TIME=300"
+    build:
+      context: MalwareMultiScan.Backends/Dockerfiles
+      dockerfile: Yara.Dockerfile
+      args:
+        - "DEBIAN_MIRROR=${PANOPTES_DEBIAN_MIRROR:-https://deb.debian.org}"
+        - "DEBIAN_SECURITY_MIRROR=${PANOPTES_DEBIAN_SECURITY_MIRROR:-https://deb.debian.org}"
+
   padvish-scanner:
     image: panoptes-scanner-padvish:local
     restart: on-failure

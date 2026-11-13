@@ -65,6 +65,7 @@ VirusTotal was not an option: data residency, file samples leaving the network, 
 | ESET Server Security | pending | frozen modules at build | needs a trial keycode (ESET business portal); install + update + scan chain verified |
 | Comodo | dead end | - | vendor abandoned the Linux CLI engine (bases frozen at 2013); excluded |
 | Padvish 3.2.152.537 | DETECTED | fully vendored (offline bundle + Windows companion DB) | vendor-direct download, no proxy needed; build-time EICAR check |
+| YARA 4.2 (forge rules) | DETECTED | YARA Forge core pack pinned at build (~5k rules) + local EICAR rule | signature matching, not a full AV - no behavioral engine; false positives possible on packed samples |
 | dummy | DETECTED | - | pipeline validator, no real AV |
 
 ## Quickstart
@@ -122,7 +123,7 @@ best-effort refresh at container start) - `update-dbs` is the periodic maintenan
 
 ### Profiles
 
-`clamav` `drweb` `mcafee` `escan` `kes` `padvish` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
+`clamav` `drweb` `mcafee` `escan` `kes` `padvish` `yara` `comodo` `e2e` (curl helper). Enable any subset at `docker compose up`.
 
 ### Environment
 
@@ -183,18 +184,18 @@ bash scripts/fetch-vendor.sh
 #    vendor/drweb.run (633MB, fetch-vendor.sh downloads it)
 
 # 3. build everything reachable, one profile at a time
-for p in clamav drweb escan mcafee windows-defender kes padvish; do
+for p in clamav drweb escan mcafee windows-defender kes padvish yara; do
   docker compose --profile $p build || echo "SKIP $p"
 done
 
 # 4. start core + whatever built
 docker compose up -d
-for p in clamav drweb escan mcafee windows-defender kes padvish; do
+for p in clamav drweb escan mcafee windows-defender kes padvish yara; do
   docker compose --profile $p up -d || true
 done
 
 # 5. verify (all green engines must DETECT EICAR)
-ENGINES="dummy clamav windows-defender drweb kes mcafee escan padvish" PANOPTES_TIMEOUT=300 \
+ENGINES="dummy clamav windows-defender drweb kes mcafee escan padvish yara" PANOPTES_TIMEOUT=300 \
   bash scripts/e2e-core.sh
 ```
 

@@ -50,6 +50,7 @@ signatures - see `docs/ARCHITECTURE.md`). It will not meaningfully detect Linux 
 | McAfee (uvscan) DATs | DOS, Windows, Unix/Linux, macOS, Android, JVM, Office macros | DAT readme documents multi-platform coverage |
 | eScan | Windows, Linux, Android + document/script | Microworld engine |
 | Padvish | Windows, Linux, Android | vendor claims; `padvishctl sigcount` = 6M+ signatures, DB shipped via apbundle |
+| YARA Forge (core pack) | cross-vendor rule sets (fileborne families, packers, APT tooling) | pinned release zip from YARAHQ/yara-forge; updates = re-run fetch-vendor.sh and rebuild |
 
 A hands-on verification pass (listing each vendor's base metadata, e.g. `drweb-ctl base`,
 `kesl-control --app-info`) can be attached here from a running deployment. It is expected to
@@ -72,3 +73,4 @@ safe inside the containers.
   that mirrors the whole industry, not a limitation of running on Linux.
 - Stale-database caveats remain per engine as documented in `docs/ARCHITECTURE.md`
   (Defender frozen 2021, KES trial bases frozen, others update at build/start).
+

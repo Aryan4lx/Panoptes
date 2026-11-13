@@ -70,3 +70,16 @@ if [ ! -f "$DRWEB" ]; then
 else
   echo "[fetch-vendor] $DRWEB already present"
 fi
+
+# YARA Forge core rules pack (~1.7MB zip). Kept zipped: extraction happens
+# inside the image build (unzip is not available in Git Bash on Windows).
+YARA="$VENDOR/yara-forge-rules-core.zip"
+if [ ! -f "$YARA" ]; then
+  echo "[fetch-vendor] downloading YARA Forge core rules ..."
+  curl -sSL --fail --retry 3 -o "$YARA" \
+    'https://github.com/YARAHQ/yara-forge/releases/download/20261108/yara-forge-rules-core.zip' \
+    || curl -sSL --fail --retry 3 -x "${PANOPTES_FETCH_PROXY:-http://127.0.0.1:10808}" -o "$YARA" \
+       'https://github.com/YARAHQ/yara-forge/releases/download/20261108/yara-forge-rules-core.zip'
+else
+  echo "[fetch-vendor] $YARA already present"
+fi
