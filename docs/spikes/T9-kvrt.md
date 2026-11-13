@@ -16,24 +16,27 @@ Tested 2026-11-13, local Docker (vendor/kvrt.run 24.0.6.0, 164MB, self-extractin
 
 ## Why it is parked
 
-The base updater blocks automation. Two failure modes, both dead ends:
+The updater is unreachable from both available network paths:
 
-1. **Updater reachable but blocked** (default container traffic): Docker Desktop traffic is
-   transparently routed through proxy TUN to the exit node ([removed-ip]). Kaspersky's edge
-   (edge.geo.kaspersky.com) 403-forbids that datacenter IP. Updater retries forever
-   (15+ min, network traffic, no scan starts). Note: the HOST reaches Kaspersky fine from the
-   real regional IP ([removed-ip]) - the block is exit-node-specific.
-2. **Updater hard-failed** (iptables REJECT on the 4 edge IPs): kvrt deadlocks
-   (`futex_do_wait` on its updater thread), no scan, no log, no timeout.
+1. **Direct (regional IP)**: `edge.geo.kaspersky.com` (the update edge) kills the TLS
+   handshake for regional IPs (curl exit 000 in ~0.3s, connection reset). Verified from both
+   the host and containers with proxy fully disconnected (container exit IP confirmed via
+   api.ipify.org = [removed-ip]). Note other Kaspersky hosts ARE reachable direct:
+   `devbuilds.s.kaspersky-labs.com` (206) and `products.s.kaspersky-labs.com` (kesl download)
+   work fine - only the update edge refuses.
+2. **Via proxy tunnel**: Kaspersky 403-forbids the datacenter exit IP
+   ([removed-ip]). Docker Desktop traffic is transparently routed through proxy TUN while
+   it is connected.
 
-Shipped bases exist (161MB, build date Oct 2025) but kvrt never falls back to them while the
-updater is failing.
+The updater retries forever in both cases (25+ min, no scan starts, shipped bases 161MB
+never used as fallback). Hard-failing the updater (iptables REJECT on the 4 edge IPs)
+deadlocks kvrt instead.
 
 ## Unlock path (if we revisit)
 
-Ask the user to add a DIRECT routing rule for `*.kaspersky-labs.com` / `edge.geo.kaspersky.com`
-in proxyN (host traffic already works direct). Then the updater should succeed and the scan
-would run - still unproven; needs one clean re-test. Shipped kvrt.run kept in `vendor/`.
+None available from the deployment region: the update edge refuses both the real IP and every datacenter
+exit we have. Re-test only if Kaspersky starts serving regional IPs or a Kaspersky-served
+proxy exit becomes available. Shipped kvrt.run kept in `vendor/` (157MB).
 
 Engine count is unaffected: clamav, defender, drweb, kes, escan, mcafee, padvish, yara = 8
 real engines already deployed (+ ESET pending keycode = 9).
