@@ -9,7 +9,7 @@
 #   update-dbs [engines...]      rebuild engine images with fresh signature databases
 #                                and recreate their containers (default: all engines)
 #   set-key eset <KEYCODE>       store the ESET keycode in .env and rebuild eset-scanner
-#   kes-freeze <kesl-bases.tar>  import a fresh KES bases export and rebuild kes-scanner
+#   kes-freeze            refresh vendor/kesl-bases.tar - fresh 31-day trial + current KES databases
 #   defender-freeze <engine.tgz> import a fresh Defender engine export and rebuild
 #   fetch                        download vendor installers (host-side, fetch-vendor.sh)
 #   e2e [engines...]             end-to-end test: EICAR through every engine (900s timeout)
@@ -177,10 +177,14 @@ case "$cmd" in
     finish
     ;;
   kes-freeze)
-    [ -n "${1:-}" ] || usage 1
-    require_compose
-    import_vendor "$1" kesl-bases.tar kes
-    finish
+    if ! bash scripts/kes-freeze.sh; then
+      FAILED+=("kes-freeze")
+      fail "KES state refresh failed"
+      hint "update step needs KLServers reachable; from blocked networks export PANOPTES_BUILD_PROXY / use a mirror"
+      hint "the old tar is untouched until the new one is verified - safe to re-run"
+      exit 1
+    fi
+    ok "kesl-bases.tar refreshed (fresh 31-day trial + current databases)"
     ;;
   defender-freeze)
     [ -n "${1:-}" ] || usage 1
