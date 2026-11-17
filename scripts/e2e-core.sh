@@ -30,14 +30,15 @@ code=$(curl -s -o /tmp/resp -w '%{http_code}' \
   -F 'file=@/tmp/eicar.txt;filename=eicar.txt' \
   http://api:5000/api/queue/file)
 
-if [ "$code" != "201" ]; then
-  echo "POST /api/queue/file failed: HTTP $code"
-  cat /tmp/resp
-  exit 1
-fi
-
 id=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' /tmp/resp)
-echo "queued scan $id, waiting for engines: $ENGINES (timeout ${PANOPTES_TIMEOUT}s)"
+
+# HTTP 200 = hash-dedup hit: the API returned the cached scan (complete
+# results included), so there is nothing to poll - evaluate it directly.
+case "$code" in
+  201) poll=1; echo "queued scan $id, waiting for engines: $ENGINES (timeout ${PANOPTES_TIMEOUT}s)" ;;
+  200) poll=0; echo "duplicate scan $id (cached verdict), evaluating directly"; cp /tmp/resp /tmp/results ;;
+  *) echo "POST /api/queue/file failed: HTTP $code"; cat /tmp/resp; exit 1 ;;
+esac
 
 final_status() {
   # 1 = succeeded, 2 = failed, 0/absent = still queued
@@ -48,6 +49,7 @@ threats_of() {
   sed -n "s/.*\"$1\":{\"status\":[0-9]*,\"duration\":[0-9]*,\"threats\":\(null\|\[[^]]*\]\).*/\1/p" /tmp/results 2>/dev/null || true
 }
 
+if [ "$poll" = 1 ]; then
 i=0
 while [ "$i" -lt "$PANOPTES_TIMEOUT" ]; do
   curl -s "http://api:5000/api/results/$id" > /tmp/results
@@ -66,6 +68,7 @@ while [ "$i" -lt "$PANOPTES_TIMEOUT" ]; do
 done
 
 curl -s "http://api:5000/api/results/$id" > /tmp/results
+fi
 
 echo
 printf '%-20s %-12s %s\n' ENGINE VERDICT THREATS
