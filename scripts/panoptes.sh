@@ -4,33 +4,115 @@
 #
 # Usage: scripts/panoptes.sh <command> [args]
 #
-# Commands
-#   up [engines...]              start core services + engine containers (default: all)
-#   update-dbs [engines...]      rebuild engine images with fresh signature databases
-#                                and recreate their containers (default: all engines)
-#   set-key eset <KEYCODE>       store the ESET keycode in .env and rebuild eset-scanner
-#   kes-freeze            refresh vendor/kesl-bases.tar - fresh 31-day trial + current KES databases
-#   defender-freeze <engine.tgz> import a fresh Defender engine export and rebuild
-#   fetch                        download vendor installers (host-side, fetch-vendor.sh)
-#   e2e [engines...]             end-to-end test: EICAR through every engine (900s timeout)
-#   status                       container status overview
-#   engines                      per-engine DB age / last update / license table
-#   help                         this text
+# Every command prints what it is doing as it runs. Exit code is 0 only when
+# every step succeeded; failures list the broken items plus a hint each, and
+# never abort the remaining engines - re-running after a fix is always safe.
+#
+# ----------------------------------------------------------------------------
+# up [engines...] - bring the whole stack online
+#   WHEN:  after a server reboot, a fresh clone/deploy, or when containers
+#          are missing or stopped (status shows fewer rows than expected).
+#   WHAT:  1. starts the core services (redis, mongodb, consul, api, ui)
+#          2. builds each requested engine image if its inputs changed
+#             (needs vendor/ installers on disk - run fetch first on a new box)
+#          3. (re)creates each engine container with the built image
+#   ENGINES default: all of them. One engine failing build/start never stops
+#   the others; a summary of failures is printed at the end.
+#   RESULT: UI on :8888, verdicts via API - verify with e2e below.
+#
+# update-dbs [engines...] - refresh signature databases into running containers
+#   WHEN:  engines shows a stale DB AGE (mcafee/padvish/escan drift, clamav
+#          freshclam broken, yara rules updated), or e2e flags TIMEOUT/CLEAN
+#          for one engine, or you just fetched new vendor signatures.
+#   WHAT:  rebuilds each engine image (the build re-downloads/installs current
+#          signature packs - ClamAV CVDs, McAfee DATs, Padvish bundle, KES
+#          frozen bases, eScan/YARA packs) and force-recreates its container.
+#          Default: every engine that carries databases. Core is untouched.
+#   NOTE:  engines whose DB is deliberately frozen (windows-defender) change
+#          nothing; kes picks up whatever vendor/kesl-bases.tar holds - run
+#          kes-freeze first for a fresh license + newest bases.
+#
+# set-key eset <KEYCODE> - activate or replace the ESET license
+#   WHEN:  first-time ESET activation, a keycode renewal, or engines shows
+#          eset "no keycode".
+#   WHAT:  writes PANOPTES_ESET_KEY into .env (chmod 600), rebuilds the
+#          eset-scanner image so the key is applied at first start, and
+#          recreates the container. Only 'eset' is accepted here; the other
+#          engines get their licenses through vendor exports (kes-freeze,
+#          drweb's self-managed demo key).
+#
+# kes-freeze - refresh the Kaspersky trial license + frozen databases
+#   WHEN:  MONTHLY, before the trial lapses - engines shows
+#          "frozen trial expires YYYY-MM-DD"; count ~25 days back and put a
+#          reminder in your calendar. Also after a failed update-dbs kes.
+#   WHAT:  runs scripts/kes-freeze.sh: spins up a disposable freezer
+#          container, activates a brand-new 31-day trial, transplants the
+#          previous frozen bases, updates them online, verifies EICAR
+#          detection, then exports everything to vendor/kesl-bases.tar.
+#          The old tar is kept until the new one passes verification - safe
+#          to re-run. Kaspersky CDN must be reachable (or use a proxy env).
+#   THEN:  apply it to the live engine: scripts/panoptes.sh update-dbs kes
+#
+# defender-freeze <engine.tgz> - import a new Defender engine export
+#   WHEN:  rarely - the Defender pack is deliberately pinned to the 2021
+#          engine that pairs with the loadlibrary loader (newer packs crash
+#          it). Only run this if you exported a known-good engine tgz.
+#   WHAT:  copies the given tgz to vendor/defender-engine.tgz, rebuilds the
+#          windows-defender image and recreates its container.
+#
+# fetch - download vendor installers to vendor/
+#   WHEN:  on a new machine or fresh clone before the first build (vendor/
+#          missing or empty), or after fetch-vendor.sh gained new downloads.
+#   WHAT:  runs scripts/fetch-vendor.sh: downloads engine installers and
+#          signature packs (KES deb, Trellix/McAfee tarball, Padvish run +
+#          signature bundle, YARA Forge rules zip, Dr.Web run, eScan deb)
+#          into MalwareMultiScan.Backends/Dockerfiles/vendor/. Skips files
+#          that already exist. CDNs that block the server: export
+#          PANOPTES_FETCH_PROXY=http://127.0.0.1:10808 and re-run.
+#
+# e2e [engines...] - prove every engine actually detects malware
+#   WHEN:  after any deploy, update-dbs, license change, or whenever you
+#          want proof the platform works end to end.
+#   WHAT:  generates a real EICAR test file inside a throwaway curl
+#          container, submits it through the API exactly like the UI does,
+#          waits for every engine's verdict, and prints a table:
+#          DETECTED = engine flagged EICAR (pass); CLEAN/FAILED/TIMEOUT
+#          (default 900s per engine) = fail, exit code 1. Override the
+#          timeout: PANOPTES_TIMEOUT=300 scripts/panoptes.sh e2e.
+#   NOTE:  identical files are deduped server-side; e2e salts its sample so
+#          every run scans fresh.
+#
+# status - quick container overview
+#   WHEN:  "is anything down?" - the 5-second check.
+#   WHAT:  docker compose ps across every profile: container, state, ports.
+#          For signature/license health use engines below.
+#
+# engines - per-engine signature age / update / license health report
+#   WHEN:  deciding whether DBs are stale or a license is about to expire;
+#          run it weekly, or before/after update-dbs and kes-freeze.
+#   WHAT:  one row per engine: STATE (container running), DB-DATE, AGE in
+#          days, UPDATES (how that engine refreshes) and LICENSE (days left,
+#          or the refresh recipe). Reads live containers - no rebuild.
+#
+# help - print this text (also: no args, -h, --help; unknown commands)
 #
 # Engines: dummy clamav windows-defender drweb kes eset escan mcafee padvish yara-forge
+#   dummy is a pipeline validator (no real AV); eset needs a keycode via
+#   set-key; windows-defender is a pinned legacy engine (see defender-freeze).
 #
 # Examples
 #   scripts/panoptes.sh up clamav drweb kes          # start only these engines
 #   scripts/panoptes.sh update-dbs clamav mcafee     # refresh just these two
 #   scripts/panoptes.sh set-key eset XXXXX-XXXXX-... # activate ESET
+#   scripts/panoptes.sh kes-freeze                   # monthly KES ritual
+#   scripts/panoptes.sh update-dbs kes               # ...then apply it
 #   scripts/panoptes.sh e2e                          # prove every engine detects EICAR
 #
-# Restricted networks (set before update-dbs if apt/CDN downloads fail):
+# Restricted networks (set before update-dbs/fetch if apt/CDN downloads fail):
 #   export PANOPTES_DEBIAN_MIRROR=https://mirror.yandex.ru
 #   export PANOPTES_DEBIAN_SECURITY_MIRROR=https://mirror.yandex.ru
 #   export PANOPTES_BUILD_PROXY=http://host.docker.internal:10808
 #   export PANOPTES_FETCH_PROXY=http://127.0.0.1:10808
-
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
