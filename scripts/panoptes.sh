@@ -14,9 +14,10 @@
 #   fetch                        download vendor installers (host-side, fetch-vendor.sh)
 #   e2e [engines...]             end-to-end test: EICAR through every engine (900s timeout)
 #   status                       container status overview
+#   engines                      per-engine DB age / last update / license table
 #   help                         this text
 #
-# Engines: dummy clamav windows-defender drweb kes eset escan mcafee padvish
+# Engines: dummy clamav windows-defender drweb kes eset escan mcafee padvish yara-forge
 #
 # Examples
 #   scripts/panoptes.sh up clamav drweb kes          # start only these engines
@@ -219,6 +220,83 @@ case "$cmd" in
   status)
     # shellcheck disable=SC2086
     docker compose $(profile_flags $ALL_ENGINES) ps
+    ;;
+  engines)
+    require_compose
+    engines="${*:-$ALL_ENGINES}"
+    printf '%-17s %-5s %-11s %-5s %s\n' ENGINE STATE DB-DATE AGE UPDATES/LICENSE
+    printf '%-17s %-5s %-11s %-5s %s\n' ------ ----- --------- --- ---------------
+    age_of() { # ISO-ish date string -> "Nd"
+      local t
+      t=$(date -d "$1" +%s 2>/dev/null) || { printf '?'; return; }
+      printf '%dd' $(( ($(date +%s) - t) / 86400 ))
+    }
+    # shellcheck disable=SC2086
+    for e in $engines; do
+      c="panoptes-$e-scanner-1"
+      if [ "$(docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null)" != "true" ]; then
+        printf '%-17s %-5s %-11s %-5s %s\n' "$e" DOWN - - -
+        continue
+      fi
+      db=""; extra=""
+      case "$e" in
+        dummy) db="n/a"; extra="simulated engine" ;;
+        clamav)
+          db=$(docker exec "$c" clamscan --version 2>/dev/null | sed -n 's|.*/[0-9]*/\(.*\)|\1|p')
+          db=$(date -d "${db:-x}" '+%Y-%m-%d' 2>/dev/null) || db="?"
+          if docker exec "$c" sh -c 'ps aux 2>/dev/null | grep -q "[f]reshclam"'; then
+            extra="freshclam daemon active (daily)"
+          else
+            extra="freshclam NOT running"
+          fi
+          ;;
+        drweb)
+          bi=$(docker exec "$c" drweb-ctl baseinfo 2>/dev/null)
+          db=$(printf '%s' "$bi" | sed -n 's/.*timestamp: \(.*\)/\1/p' | head -1)
+          upd=$(printf '%s' "$bi" | sed -n 's/.*successful update: \(.*\)/\1/p' | head -1)
+          lic=$(docker exec "$c" drweb-ctl license 2>/dev/null | sed -n 's/.*expires \(.*\) (\([0-9]*\) days left).*/\2d left (\1)/p' | head -1)
+          extra="auto: ${upd:-?} | demo: ${lic:-NONE}"
+          ;;
+        kes)
+          ai=$(docker exec "$c" kesl-control --app-info 2>/dev/null)
+          db=$(printf '%s' "$ai" | sed -n 's/.*Last release date of databases: \([0-9-]*\).*/\1/p' | head -1)
+          lic=$(printf '%s' "$ai" | sed -n 's/.*License expiration date: \([0-9-]*\).*/\1/p' | head -1)
+          extra="frozen trial expires ${lic:-?} (renew: scripts/panoptes.sh kes-freeze)"
+          ;;
+        mcafee)
+          db=$(docker exec "$c" /usr/local/uvscan/uvscan --version 2>/dev/null | sed -n 's/.*created \(.*\)/\1/p' | head -1)
+          db=$(date -d "${db:-x}" '+%Y-%m-%d' 2>/dev/null) || db="?"
+          extra="baked at build (refresh: scripts/panoptes.sh update-dbs mcafee)"
+          ;;
+        padvish)
+          db=$(docker exec "$c" /opt/padvish/bin/padvishctl dbver 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+          extra="baked at build (refresh: scripts/panoptes.sh update-dbs padvish)"
+          ;;
+        escan)
+          db=$(docker exec "$c" stat -c '%y' /opt/MicroWorld/etc/escandet.dat 2>/dev/null | cut -c1-10)
+          extra="no runtime updater (refresh: scripts/panoptes.sh update-dbs escan)"
+          ;;
+        windows-defender)
+          db=$(docker exec "$c" stat -c '%y' /opt/engine/mpengine.dll 2>/dev/null | cut -c1-10)
+          extra="pinned pack (2021 engine pairs with the loader; newer packs crash it)"
+          ;;
+        yara-forge)
+          db=$(docker exec "$c" stat -c '%y' /opt/rules/yara-rules-core.yar 2>/dev/null | cut -c1-10)
+          extra="static rule pack (refresh: fetch vendor + update-dbs yara-forge)"
+          ;;
+        eset)
+          db="n/a"
+          if grep -q '^PANOPTES_ESET_KEY=' "$ENV_FILE" 2>/dev/null; then
+            extra="key configured"
+          else
+            extra="no keycode (scripts/panoptes.sh set-key eset <KEY>)"
+          fi
+          ;;
+        *) db="?"; extra="unknown engine" ;;
+      esac
+      a=$(age_of "$db"); [ "$db" = "n/a" ] && a="-"
+      printf '%-17s %-5s %-11s %-5s %s\n' "$e" UP "${db:-?}" "$a" "$extra"
+    done
     ;;
   help|-h|--help)
     usage 0
