@@ -253,7 +253,8 @@ case "$cmd" in
         drweb)
           bi=$(docker exec "$c" drweb-ctl baseinfo 2>/dev/null)
           db=$(printf '%s' "$bi" | sed -n 's/.*timestamp: \(.*\)/\1/p' | head -1)
-          db=$(printf '%s' "$db" | sed 's/-\([A-Z][a-z][a-z]\)-/ \1 /')
+          db=$(printf '%s' "$db" | sed -e 's/-Jan-/-01-/' -e 's/-Feb-/-02-/' -e 's/-Mar-/-03-/' -e 's/-Apr-/-04-/' -e 's/-May-/-05-/' -e 's/-Jun-/-06-/' -e 's/-Jul-/-07-/' -e 's/-Aug-/-08-/' -e 's/-Sep-/-09-/' -e 's/-Oct-/-10-/' -e 's/-Nov-/-11-/' -e 's/-Dec-/-12-/')
+          db=${db:0:10}
           upd=$(printf '%s' "$bi" | sed -n 's/.*successful update: \(.*\)/\1/p' | head -1)
           lic=$(docker exec "$c" drweb-ctl license 2>/dev/null | sed -n 's/.*expires \(.*\) (\([0-9]*\) days left).*/\2d left (\1)/p' | head -1)
           extra="auto: ${upd:-?} | demo: ${lic:-NONE}"
