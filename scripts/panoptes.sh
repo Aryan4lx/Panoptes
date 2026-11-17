@@ -253,14 +253,15 @@ case "$cmd" in
         drweb)
           bi=$(docker exec "$c" drweb-ctl baseinfo 2>/dev/null)
           db=$(printf '%s' "$bi" | sed -n 's/.*timestamp: \(.*\)/\1/p' | head -1)
+          db=$(printf '%s' "$db" | sed 's/-\([A-Z][a-z][a-z]\)-/ \1 /')
           upd=$(printf '%s' "$bi" | sed -n 's/.*successful update: \(.*\)/\1/p' | head -1)
           lic=$(docker exec "$c" drweb-ctl license 2>/dev/null | sed -n 's/.*expires \(.*\) (\([0-9]*\) days left).*/\2d left (\1)/p' | head -1)
           extra="auto: ${upd:-?} | demo: ${lic:-NONE}"
           ;;
         kes)
           ai=$(docker exec "$c" kesl-control --app-info 2>/dev/null)
-          db=$(printf '%s' "$ai" | sed -n 's/.*Last release date of databases: \([0-9-]*\).*/\1/p' | head -1)
-          lic=$(printf '%s' "$ai" | sed -n 's/.*License expiration date: \([0-9-]*\).*/\1/p' | head -1)
+          db=$(printf '%s' "$ai" | sed -n 's/.*Last release date of databases:[[:space:]]*\([0-9-]*\).*/\1/p' | head -1)
+          lic=$(printf '%s' "$ai" | sed -n 's/.*License expiration date:[[:space:]]*\([0-9-]*\).*/\1/p' | head -1)
           extra="frozen trial expires ${lic:-?} (renew: scripts/panoptes.sh kes-freeze)"
           ;;
         mcafee)
